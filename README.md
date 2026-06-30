@@ -1,118 +1,61 @@
-# BDH (Dragon Hatchling)
+# BDH Adaptation for Control
 
-## **Bridging the Gap Between Transformers and the Brain**
+A research experiment investigating the role of online synaptic plasticity in fast adaptation to changing environment dynamics.
 
-**BDH (Dragon Hatchling)** is a biologically inspired large language model architecture that connects principles of deep learning with the foundations of neuroscience. Developed by researchers at [Pathway](https://pathway.com), BDH provides a theoretical and practical framework for understanding the emergence of reasoning and generalization in artificial systems.
+---
 
-This repository contains the official implementation from the paper:
-> *A. Kosowski, P. Uznański, J. Chorowski, Z. Stamirowska, M. Bartoszkiewicz.*
-> [_The Dragon Hatchling: The Missing Link between the Transformer and Models of the Brain_](https://doi.org/10.48550/arXiv.2509.26507), arXiv (2025).
+## Hypothesis
 
+**Primary Hypothesis ($H_1$):**
+The online synaptic plasticity of the BDH (Dragon Hatchling) architecture—governed by the fast-weight state $\sigma$ that updates during inference via a Hebbian rule—enables the model to adapt to mid-rollout changes in environment dynamics faster than:
+1.  **Frozen-$\sigma$ BDH:** The same trained BDH model with its synaptic-state update clamped off at test time.
+2.  **Transformer:** A parameter-matched Transformer with a fair context window (adapting via in-context learning).
 
-## Overview
+**Null / Kill Condition:**
+If the live-$\sigma$ BDH does not outperform the frozen-$\sigma$ BDH in recovery speed/error after the dynamics switch, the plasticity effect is unsupported. In this event, the experiment will be halted and the findings documented.
 
-BDH represents a **scale-free, locally interacting network of neurons** capable of intrinsic reasoning dynamics. BDH scales like a Transformer on performance benchmarks—yet retains full interpretability and theoretical grounding in the fine-grained dynamics of neuron interactions.
+---
 
-**Key properties:**
+## Experimental Design
 
-- **Scale-free network topology** mimicking biological connectivity
-- **Locally interacting neuron particles** with excitatory/inhibitory dynamics
-- **Hebbian working memory** based on synaptic plasticity, displaying monosemanticity
-- **GPU-friendly state-space formulation** for efficient implementation
-- **Interpretable activations** that are sparse and positive
+The experiment is divided into two phases using the `Pendulum-v1` environment:
 
-BDH formalizes a bridge between **neural computation and machine-based language understanding**. It shows how **macro reasoning behavior** in large AI models emerges from **micro-level neuron dynamics**, guided by principles of graph theory and local computation.
+### Phase A: Open-Loop Next-State Prediction (Core)
+*   **Training:** Train models to predict the next state $s_{t+1}$ given the history of states and actions $(s_{\le t}, a_{\le t})$ under **dynamics regime A** (e.g., standard pole mass/length/gravity).
+*   **Testing:** Run evaluation rollouts where the dynamics switch from **regime A $\rightarrow$ regime B** (e.g., altered gravity or pole mass) mid-episode. No gradient updates are performed at test time.
+*   **Evaluation:** Measure the prediction error recovery curve and the time-to-recover.
 
-Empirically, BDH matches **GPT-2–scale Transformers** across language and translation tasks at equivalent parameter scales (10M–1B).
+### Phase B: Closed-Loop Control (Stretch)
+*   **Training:** Train a reinforcement learning expert (using SAC/PPO) on regime A, and behavior-clone the expert's policy into a continuous-input BDH model.
+*   **Testing:** Run the policy in a closed-loop environment where the dynamics switch mid-episode.
+*   **Evaluation:** Measure the recovery in episode return and stabilization time.
 
+---
 
-***
+## Model Baselines
 
-## Architecture
+To ensure a rigorous comparison, all models are evaluated under the same parameter and training-budget constraints:
+*   **Live-$\sigma$ BDH:** Active online Hebbian updates during inference.
+*   **Frozen-$\sigma$ BDH (Ablation):** Clamped $\sigma$ during inference to isolate the effect of plasticity from the static weights.
+*   **Param-matched Transformer:** Evaluated with a sufficiently long context window to allow for in-context adaptation.
+*   **GRU / MLP:** Lower-bound baselines to calibrate performance.
 
-<img src="figs/architecture.png" width="600"/>
+---
 
-***
+## Metrics
 
-## Relation to Transformers
+*   **Prediction Error Curve:** MSE between predicted and actual next states over time.
+*   **Time-to-Recover:** The number of timesteps after the dynamics switch until the prediction error returns to within 110% of the pre-switch baseline.
+*   **Area Under the Recovery Curve (AURC):** The cumulative prediction error post-switch.
 
-<img src="figs/vocab.png" width="600"/>
+---
 
-BDH and the Transformer share attention-inspired computation; however, BDH’s graph-based architecture makes its attention **emerge naturally from neuron-level interactions**, reflecting attention as seen in biological systems.
+## Project Structure & Roadmap
 
-***
-
-## Scaling Laws
-
-<img src="figs/bdh_scaling.png" width="600"/>
-
-BDH follows **Transformer-like scaling laws**, maintaining parameter efficiency while achieving interpretability at any scale.
-
-***
-
-## Latest research update: Sudoku Benchmark
-
-Note: The Sudoku Extreme result refers to Pathway’s internal BDH implementation, not to the current open-source repository. This repository contains the implementation of the baseline variant as described in our [public paper](https://arxiv.org/abs/2509.26507) and does not reproduce the 97.4% benchmark result out of the box. See the dedicated Extreme Sudoku research blog post for additional benchmark context and the reported results.
-
-On Sudoku Extreme, BDH reaches 97.4% accuracy across roughly 250,000 difficult puzzles, without chain-of-thought, solution backtracking, or external tool use, while leading LLMs struggle to perform on the benchmark at all.
-
-Language is not enough for intelligence. Transformers process information token by token with limited internal state, which makes search-heavy, non-linguistic reasoning tasks like Sudoku awkward. BDH uses a larger latent reasoning space with intrinsic memory that supports learning and adaptation during use.
-
-We believe that the future of AI will belong to systems that can reason natively across domains, that can hold multiple possibilities in a rich latent space, and that can converge on solutions without needing to verbalize every step. BDH is our answer to that challenge. It is designed to be a universal reasoning system that can speak our language without being trapped inside it. And yes, it solves Sudoku.
-
-Read more: [Post-transformers: Sudoku Bench](https://pathway.com/research/beyond-transformers-sudoku-bench)
-
-### Performance Comparison
-
-| Model | Sudoku Extreme Accuracy | Relative Cost |
-|------|------------------------|--------------|
-| Pathway BDH | 97.4% | 10× lower, No chain-of-thought |
-| Leading LLMs (O3-mini, DeepSeek R1, Claude 3.7 8K) | ~0% | High (chain-of-thought) |
-
-*Table 1: Performance comparison on extreme Sudoku benchmarks (~250,000 difficult puzzles).*  
-*Source: Pathway internal data and https://arxiv.org/pdf/2506.21734 for the Leading LLMs’ accuracy score. Pathway’s approach reflects top-1 accuracy and does not rely on chain-of-thought nor solution backtracking.*
-
-
-## Installation and Training
-
-```bash
-# install dependencies
-pip install -r requirements.txt
-
-# train BDH on a toy dataset
-python train.py
-```
-
-<!--For visualization and interpretability analysis, explore the example notebooks in `notebooks/`.-->
-
-
-
-## Learn and Discuss
-
-- Watch the *SuperDataScience podcast* [▶️ *Dragon Hatchling: The Missing Link Between Transformers and the Brain*](https://www.youtube.com/watch?v=mfV44-mtg7c) (72 min.) featuring Adrian Kosowski in conversation with Jon Krohn, unpacking BDH’s neuron-level architecture and sparse reasoning dynamics.
-
-- Read about BDH in
-[*Forbes*](https://www.forbes.com/sites/victordey/2025/10/08/can-ai-learn-and-evolve-like-a-brain-pathways-bold-research-thinks-so/),
-[*Semafor*](https://www.semafor.com/article/10/01/2025/new-ai-research-claims-to-be-getting-closer-to-modeling-human-brain),
-[*The Turing Post*](https://www.turingpost.com/p/fod-121-300-million-to-start-a-big-promise-for-science#the-freshest-research-papers-catego),
-[*Quantum Zeitgeist*](https://quantumzeitgeist.com/palo-alto-ai-firm-pathway-unveils-post-transformer-architecture-for-autonomous-ai/),
-[*Golem*](https://www.golem.de/news/neue-ki-architektur-was-ist-baby-dragon-hatchling-2510-201047-2.html),
-and elsewhere in the media.
-
-- Discuss and share the BDH paper on:
-[*Hugging Face Papers*](https://huggingface.co/papers/2509.26507), 
-[*Alphaxiv*](https://alphaxiv.org/abs/2509.26507),
-and [*EmergentMind*](https://emergentmind.com/papers/2509.26507).
-
-## Community Projects
-
-- [adamskrodzki/bdh](https://github.com/adamskrodzki/bdh): dynamic vocabulary, stateful attention
-- [mosure/burn_dragon_hatchling](https://github.com/mosure/burn_dragon_hatchling): Burn port
-- [severian42/bdh](https://github.com/severian42/bdh): MLX port
-- [Git-Faisal/bdh](https://github.com/Git-Faisal/bdh)
-- [GrahLnn/bdh](https://github.com/GrahLnn/bdh)
-
-## Acknowledgements
-We thank Andrej Karpathy for the [nanoGPT](https://github.com/karpathy/nanoGPT/) code and the tiny Shapespeare dataset used in this demonstration.
-
-BDH research stands at the intersection of **AI architecture**, **biological learning models**, and **theoretical computer science**—an effort to map the *equations of reasoning* between artificial and biological intelligence.
+*   **`bdh.py`**: Model architecture.
+*   **`train.py`**: Toy training script (original language modeling setup).
+*   **Milestone M0 (Current):** Environment setup and stock model sanity checks.
+*   **Milestone M1:** Adapting BDH for continuous state-action inputs and next-state regression.
+*   **Milestone M2:** Implementing the mid-rollout switch harness and establishing the live-$\sigma$ baseline.
+*   **Milestone M3:** Implementing the frozen-$\sigma$ ablation and baseline models.
+*   **Milestone M4:** Multi-seed runs, aggregating results, and plotting figures.
