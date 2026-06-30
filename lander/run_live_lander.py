@@ -12,7 +12,7 @@ from env import LunarLanderRegimeEnv
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 HORIZON = 500
-SWITCH_TIMESTEP = 150 # Induce failure at step 150
+SWITCH_TIMESTEP = 60 # Induce failure at step 60
 
 def run_live(policy_path, config):
     env = LunarLanderRegimeEnv(render_mode="human", privileged=False)

@@ -104,7 +104,7 @@ def train_policy(model, name, train_s, train_a, val_s, val_a):
     return model
 
 if __name__ == "__main__":
-    expert_path = "../checkpoints/expert_policy.pt"
+    expert_path = "checkpoints/expert_policy.pt"
     if not os.path.exists(expert_path):
         print(f"Error: Expert policy '{expert_path}' not found. Please train the expert first.")
         exit(1)

@@ -105,7 +105,7 @@ def calculate_recovery_metrics(errors, switch_timestep, threshold_multiplier: fl
         "aurc": aurc
     }
 
-def plot_recovery_curve(errors, switch_timestep, metrics, filename="../figs/recovery_curve.png"):
+def plot_recovery_curve(errors, switch_timestep, metrics, filename="figs/recovery_curve.png"):
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     
     plt.figure(figsize=(10, 5))
@@ -127,7 +127,7 @@ def plot_recovery_curve(errors, switch_timestep, metrics, filename="../figs/reco
     print(f"Recovery curve plot saved to {filename}")
 
 if __name__ == "__main__":
-    checkpoint_path = "../checkpoints/bdh_control_best.pt"
+    checkpoint_path = "checkpoints/bdh_control_best.pt"
     if not os.path.exists(checkpoint_path):
         print(f"Error: Checkpoint '{checkpoint_path}' not found. Please train the model first.")
         exit(1)

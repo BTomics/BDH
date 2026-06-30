@@ -21,6 +21,12 @@ class LunarLanderRegimeEnv:
 
     def reset(self, **kwargs):
         obs, info = self.env.reset(**kwargs)
+        
+        # INCREASE DROP HEIGHT
+        pos = self.env.unwrapped.lander.position
+        self.env.unwrapped.lander.position = (pos.x, pos.y + 10.0)
+        obs = self.env.unwrapped.step(np.array([0.0, 0.0]))[0] # Step with zero action to update internal state/obs cleanly
+        
         if self.privileged:
             obs = np.append(obs, self.regimes[self.current_regime]["health"]).astype(np.float32)
         return obs, info

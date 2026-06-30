@@ -12,7 +12,7 @@ from policy_models import BDHPolicy
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 HORIZON = 500
-SWITCH_TIMESTEP = 150
+SWITCH_TIMESTEP = 60
 REGIME_B = "B"
 
 def run_closed_loop_rollout(policy_model, model_name):

@@ -161,9 +161,9 @@ def train_ddpg():
             if term or trunc: break
         print(f"Test Reward: {ret:7.1f} | g: {info['g']:.1f}")
 
-    os.makedirs("../checkpoints", exist_ok=True)
-    torch.save(actor.state_dict(), "../checkpoints/robust_expert_policy.pt")
-    print("Expert policy saved to '../checkpoints/robust_expert_policy.pt'")
+    os.makedirs("checkpoints", exist_ok=True)
+    torch.save(actor.state_dict(), "checkpoints/robust_expert_policy.pt")
+    print("Expert policy saved to 'checkpoints/robust_expert_policy.pt'")
     env.close()
 
 if __name__ == "__main__":

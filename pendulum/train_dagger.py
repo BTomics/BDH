@@ -21,7 +21,7 @@ LEARNING_RATE = 5e-4
 WEIGHT_DECAY = 1e-4
 
 def get_expert():
-    expert_path = "../checkpoints/robust_expert_policy.pt"
+    expert_path = "checkpoints/robust_expert_policy.pt"
     if not os.path.exists(expert_path):
         raise FileNotFoundError("Run train_robust_expert.py first to generate the privileged expert.")
     
@@ -129,9 +129,9 @@ def run_dagger():
                 print(f"  Epoch {epoch:4d} | Train MSE: {loss.item():.6f}")
                 
     # Save policy
-    os.makedirs("../checkpoints", exist_ok=True)
-    torch.save(policy.state_dict(), "../checkpoints/bdh_dagger_policy.pt")
-    print("DAgger training complete. Saved to '../checkpoints/bdh_dagger_policy.pt'")
+    os.makedirs("checkpoints", exist_ok=True)
+    torch.save(policy.state_dict(), "checkpoints/bdh_dagger_policy.pt")
+    print("DAgger training complete. Saved to 'checkpoints/bdh_dagger_policy.pt'")
     env.close()
 
 if __name__ == "__main__":

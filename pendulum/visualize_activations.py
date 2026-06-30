@@ -59,7 +59,7 @@ def generate_activations(policy_path, config):
         
     return all_activations, np.array(rewards), np.array(cos_thetas)
 
-def plot_enhanced_activations(all_activations, rewards, cos_thetas, n_layer=3, n_head=0, filename="../figs/enhanced_activations.png"):
+def plot_enhanced_activations(all_activations, rewards, cos_thetas, n_layer=3, n_head=0, filename="figs/enhanced_activations.png"):
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     
     # Create subplots: Top for Rewards/Angle, Bottom ones for Layers
@@ -115,7 +115,7 @@ def plot_enhanced_activations(all_activations, rewards, cos_thetas, n_layer=3, n
     print(f"Enhanced visualization saved to '{filename}'")
 
 if __name__ == "__main__":
-    policy_path = "../checkpoints/bdh_dagger_policy.pt"
+    policy_path = "checkpoints/bdh_dagger_policy.pt"
     if not os.path.exists(policy_path):
         print(f"Error: Policy checkpoint '{policy_path}' not found. Please run train_dagger.py first.")
         exit(1)

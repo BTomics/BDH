@@ -75,7 +75,7 @@ def run_closed_loop_rollout(policy_model, model_name, freeze_timestep=None):
 
 if __name__ == "__main__":
     # Check checkpoints
-    files = ["../checkpoints/expert_policy.pt", "../checkpoints/bdh_policy.pt", "../checkpoints/transformer_policy.pt", "../checkpoints/gru_policy.pt", "../checkpoints/bdh_dagger_policy.pt", "../checkpoints/bdh_ppo_policy.pt"]
+    files = ["checkpoints/expert_policy.pt", "checkpoints/bdh_policy.pt", "checkpoints/transformer_policy.pt", "checkpoints/gru_policy.pt", "checkpoints/bdh_dagger_policy.pt", "checkpoints/bdh_ppo_policy.pt"]
     missing = [f for f in files if not os.path.exists(f)]
     if missing:
         print(f"Warning: Missing checkpoints: {missing}.")
@@ -84,8 +84,8 @@ if __name__ == "__main__":
     
     # 1. Expert Policy
     expert = Actor(state_dim=3, action_dim=1).to(device)
-    if os.path.exists("../checkpoints/expert_policy.pt"):
-        expert.load_state_dict(torch.load("../checkpoints/expert_policy.pt", map_location=device))
+    if os.path.exists("checkpoints/expert_policy.pt"):
+        expert.load_state_dict(torch.load("checkpoints/expert_policy.pt", map_location=device))
     expert.eval()
     
     # BDH Config
@@ -96,44 +96,44 @@ if __name__ == "__main__":
     
     # 2. BDH Policy (BC)
     bdh_policy = BDHPolicy(bdh_config).to(device)
-    if os.path.exists("../checkpoints/bdh_policy.pt"):
-        bdh_policy.load_state_dict(torch.load("../checkpoints/bdh_policy.pt", map_location=device))
+    if os.path.exists("checkpoints/bdh_policy.pt"):
+        bdh_policy.load_state_dict(torch.load("checkpoints/bdh_policy.pt", map_location=device))
     bdh_policy.eval()
     
     # 3. Transformer Policy
     tf_policy = TransformerPolicy(state_dim=3, action_dim=1, n_embd=96, n_head=4, n_layer=3).to(device)
-    if os.path.exists("../checkpoints/transformer_policy.pt"):
-        tf_policy.load_state_dict(torch.load("../checkpoints/transformer_policy.pt", map_location=device))
+    if os.path.exists("checkpoints/transformer_policy.pt"):
+        tf_policy.load_state_dict(torch.load("checkpoints/transformer_policy.pt", map_location=device))
     tf_policy.eval()
     
     # 4. GRU Policy
     gru_policy = GRUPolicy(state_dim=3, action_dim=1, n_embd=128, n_layer=2).to(device)
-    if os.path.exists("../checkpoints/gru_policy.pt"):
-        gru_policy.load_state_dict(torch.load("../checkpoints/gru_policy.pt", map_location=device))
+    if os.path.exists("checkpoints/gru_policy.pt"):
+        gru_policy.load_state_dict(torch.load("checkpoints/gru_policy.pt", map_location=device))
     gru_policy.eval()
     
     # 5. BDH DAgger Policy
     bdh_dagger = BDHPolicy(bdh_config).to(device)
-    if os.path.exists("../checkpoints/bdh_dagger_policy.pt"):
-        bdh_dagger.load_state_dict(torch.load("../checkpoints/bdh_dagger_policy.pt", map_location=device))
+    if os.path.exists("checkpoints/bdh_dagger_policy.pt"):
+        bdh_dagger.load_state_dict(torch.load("checkpoints/bdh_dagger_policy.pt", map_location=device))
     bdh_dagger.eval()
     
     # 6. BDH PPO Policy
     bdh_ppo = BDHActorCritic(bdh_config).to(device)
-    if os.path.exists("../checkpoints/bdh_ppo_policy.pt"):
-        bdh_ppo.load_state_dict(torch.load("../checkpoints/bdh_ppo_policy.pt", map_location=device))
+    if os.path.exists("checkpoints/bdh_ppo_policy.pt"):
+        bdh_ppo.load_state_dict(torch.load("checkpoints/bdh_ppo_policy.pt", map_location=device))
     bdh_ppo.eval()
     
     # Run closed loop evaluations
     results = {}
     
     print("\nRunning closed-loop evaluations...")
-    if os.path.exists("../checkpoints/expert_policy.pt"): results["Expert"] = run_closed_loop_rollout(expert, "Expert")
-    if os.path.exists("../checkpoints/bdh_policy.pt"): results["BDH (BC)"] = run_closed_loop_rollout(bdh_policy, "BDH (BC)", freeze_timestep=None)
-    if os.path.exists("../checkpoints/transformer_policy.pt"): results["Transformer (BC)"] = run_closed_loop_rollout(tf_policy, "Transformer")
-    if os.path.exists("../checkpoints/gru_policy.pt"): results["GRU (BC)"] = run_closed_loop_rollout(gru_policy, "GRU")
-    if os.path.exists("../checkpoints/bdh_dagger_policy.pt"): results["BDH (DAgger)"] = run_closed_loop_rollout(bdh_dagger, "BDH (DAgger)", freeze_timestep=None)
-    if os.path.exists("../checkpoints/bdh_ppo_policy.pt"): results["BDH (PPO)"] = run_closed_loop_rollout(bdh_ppo, "BDH (PPO)")
+    if os.path.exists("checkpoints/expert_policy.pt"): results["Expert"] = run_closed_loop_rollout(expert, "Expert")
+    if os.path.exists("checkpoints/bdh_policy.pt"): results["BDH (BC)"] = run_closed_loop_rollout(bdh_policy, "BDH (BC)", freeze_timestep=None)
+    if os.path.exists("checkpoints/transformer_policy.pt"): results["Transformer (BC)"] = run_closed_loop_rollout(tf_policy, "Transformer")
+    if os.path.exists("checkpoints/gru_policy.pt"): results["GRU (BC)"] = run_closed_loop_rollout(gru_policy, "GRU")
+    if os.path.exists("checkpoints/bdh_dagger_policy.pt"): results["BDH (DAgger)"] = run_closed_loop_rollout(bdh_dagger, "BDH (DAgger)", freeze_timestep=None)
+    if os.path.exists("checkpoints/bdh_ppo_policy.pt"): results["BDH (PPO)"] = run_closed_loop_rollout(bdh_ppo, "BDH (PPO)")
     
     # Print episode returns
     print("\n=== CLOSED-LOOP EPISODE RETURNS ===")
@@ -142,7 +142,7 @@ if __name__ == "__main__":
     print("===================================\n")
     
     # Plot Step Rewards
-    os.makedirs("../figs", exist_ok=True)
+    os.makedirs("figs", exist_ok=True)
     plt.figure(figsize=(12, 6))
     
     colors = {
@@ -173,6 +173,6 @@ if __name__ == "__main__":
     plt.legend()
     plt.grid(True, alpha=0.3)
     
-    plt.savefig("../figs/closed_loop_recovery.png", dpi=300)
+    plt.savefig("figs/closed_loop_recovery.png", dpi=300)
     plt.close()
-    print("Closed-loop recovery plot saved to '../figs/closed_loop_recovery.png'")
+    print("Closed-loop recovery plot saved to 'figs/closed_loop_recovery.png'")

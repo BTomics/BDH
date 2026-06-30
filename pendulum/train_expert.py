@@ -157,8 +157,8 @@ def train_ddpg():
             break
             
     # Save the trained actor network (policy)
-    torch.save(actor.state_dict(), "../checkpoints/expert_policy.pt")
-    print("Expert policy saved to '../checkpoints/expert_policy.pt'")
+    torch.save(actor.state_dict(), "checkpoints/expert_policy.pt")
+    print("Expert policy saved to 'checkpoints/expert_policy.pt'")
     env.close()
 
 if __name__ == "__main__":

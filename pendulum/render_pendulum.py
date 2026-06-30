@@ -14,7 +14,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 HORIZON = 200
 SWITCH_TIMESTEP = 100
 
-def render_rollout(policy_path, config, output_file="../figs/pendulum_rollout.gif"):
+def render_rollout(policy_path, config, output_file="figs/pendulum_rollout.gif"):
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     
     # Initialize env with render_mode="rgb_array"
@@ -69,7 +69,7 @@ def render_rollout(policy_path, config, output_file="../figs/pendulum_rollout.gi
     print(f"Video saved to {output_file}")
 
 if __name__ == "__main__":
-    policy_path = "../checkpoints/bdh_policy.pt"
+    policy_path = "checkpoints/bdh_policy.pt"
     bdh_config = bdh.BDHConfig(
         n_layer=3, n_embd=64, n_head=4, mlp_internal_dim_multiplier=8,
         state_dim=3, action_dim=1

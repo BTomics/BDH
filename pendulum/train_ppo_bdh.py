@@ -155,9 +155,9 @@ def train_ppo():
             loss.backward()
             optimizer.step()
             
-    os.makedirs("../checkpoints", exist_ok=True)
-    torch.save(policy.state_dict(), "../checkpoints/bdh_ppo_policy.pt")
-    print("PPO training complete. Saved to '../checkpoints/bdh_ppo_policy.pt'")
+    os.makedirs("checkpoints", exist_ok=True)
+    torch.save(policy.state_dict(), "checkpoints/bdh_ppo_policy.pt")
+    print("PPO training complete. Saved to 'checkpoints/bdh_ppo_policy.pt'")
     env.close()
 
 if __name__ == "__main__":

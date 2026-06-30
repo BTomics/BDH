@@ -16,12 +16,12 @@ class PendulumRegimeEnv:
                 "l": 1.0
             },
             "B": {
-                "g": 19.0,  # Slightly increased gravity (survivable switch)
+                "g": 20.0,  # Slightly increased gravity (survivable switch)
                 "m": 1.0,
                 "l": 1.0
             },
             "B_novel": {
-                "g": 19.0,
+                "g": 20.0,
                 "m": 3.0,
                 "l": 1.0
             }

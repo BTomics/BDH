@@ -63,5 +63,5 @@ if __name__ == "__main__":
         state_dim=3, action_dim=1
     )
     
-    policy_path = "../checkpoints/bdh_dagger_policy.pt"
+    policy_path = "checkpoints/bdh_dagger_policy.pt"
     run_live(policy_path, bdh_config)

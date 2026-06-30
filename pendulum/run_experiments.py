@@ -231,6 +231,6 @@ plt.yscale("log") # Log scale helps visualize differences across orders of magni
 plt.legend()
 plt.grid(True, which="both", alpha=0.3)
 
-plt.savefig("../figs/all_recovery_curves.png", dpi=300)
+plt.savefig("figs/all_recovery_curves.png", dpi=300)
 plt.close()
-print("Comparison plot saved to '../figs/all_recovery_curves.png'")
+print("Comparison plot saved to 'figs/all_recovery_curves.png'")

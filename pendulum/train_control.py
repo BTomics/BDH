@@ -91,7 +91,7 @@ for epoch in range(EPOCHS):
                 'optimizer_state_dict': optimizer.state_dict(),
                 'val_loss': best_val_loss,
                 'config': config
-            }, "../checkpoints/bdh_control_best.pt")
+            }, "checkpoints/bdh_control_best.pt")
 
 print(f"\nTraining completed. Best Val MSE: {best_val_loss:.6f}")
-print("Checkpoint saved to '../checkpoints/bdh_control_best.pt'")
+print("Checkpoint saved to 'checkpoints/bdh_control_best.pt'")

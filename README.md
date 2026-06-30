@@ -1,61 +1,45 @@
-# BDH Adaptation for Control
+# BDH Sequence Model: Sim-to-Real Adaptation
 
-A research experiment investigating the role of online synaptic plasticity in fast adaptation to changing environment dynamics.
+A research repository investigating the role of online synaptic plasticity in fast adaptation to changing environment dynamics. We utilize the **BDH (Biologically Derived Hebbian)** sequence architecture, which uses Fast Weights (a dynamic $\sigma$ state) to adapt its own internal weights in real-time during inference. 
 
----
-
-## Hypothesis
-
-**Primary Hypothesis ($H_1$):**
-The online synaptic plasticity of the BDH (Dragon Hatchling) architecture—governed by the fast-weight state $\sigma$ that updates during inference via a Hebbian rule—enables the model to adapt to mid-rollout changes in environment dynamics faster than:
-1.  **Frozen-$\sigma$ BDH:** The same trained BDH model with its synaptic-state update clamped off at test time.
-2.  **Transformer:** A parameter-matched Transformer with a fair context window (adapting via in-context learning).
-
-**Null / Kill Condition:**
-If the live-$\sigma$ BDH does not outperform the frozen-$\sigma$ BDH in recovery speed/error after the dynamics switch, the plasticity effect is unsupported. In this event, the experiment will be halted and the findings documented.
+We test this architecture on its ability to solve the **Sim-to-Real gap**, where an agent trained in simulation must rapidly adapt when the real-world physics unexpectedly change mid-flight.
 
 ---
 
-## Experimental Design
-
-The experiment is divided into two phases using the `Pendulum-v1` environment:
-
-### Phase A: Open-Loop Next-State Prediction (Core)
-*   **Training:** Train models to predict the next state $s_{t+1}$ given the history of states and actions $(s_{\le t}, a_{\le t})$ under **dynamics regime A** (e.g., standard pole mass/length/gravity).
-*   **Testing:** Run evaluation rollouts where the dynamics switch from **regime A $\rightarrow$ regime B** (e.g., altered gravity or pole mass) mid-episode. No gradient updates are performed at test time.
-*   **Evaluation:** Measure the prediction error recovery curve and the time-to-recover.
-
-### Phase B: Closed-Loop Control (Stretch)
-*   **Training:** Train a reinforcement learning expert (using SAC/PPO) on regime A, and behavior-clone the expert's policy into a continuous-input BDH model.
-*   **Testing:** Run the policy in a closed-loop environment where the dynamics switch mid-episode.
-*   **Evaluation:** Measure the recovery in episode return and stabilization time.
+## 📁 Repository Structure
+- `src/`: The core BDH architecture (`bdh.py`, `policy_models.py`).
+- `pendulum/`: The classic Pendulum experiments, featuring a sudden mid-flight gravity shift.
+- `lander/`: The advanced LunarLander experiments, featuring a catastrophic mid-flight thruster failure.
 
 ---
 
-## Model Baselines
+## 🚀 Experiment 1: Pendulum Gravity Switch (`pendulum/`)
+We start with the classic `Pendulum-v1` environment. Midway through the rollout, the gravity suddenly shifts from $g=10$ to $g=20$.
 
-To ensure a rigorous comparison, all models are evaluated under the same parameter and training-budget constraints:
-*   **Live-$\sigma$ BDH:** Active online Hebbian updates during inference.
-*   **Frozen-$\sigma$ BDH (Ablation):** Clamped $\sigma$ during inference to isolate the effect of plasticity from the static weights.
-*   **Param-matched Transformer:** Evaluated with a sufficiently long context window to allow for in-context adaptation.
-*   **GRU / MLP:** Lower-bound baselines to calibrate performance.
+By cloning an omniscient **Privileged Expert** into the BDH model using **DAgger**, the BDH architecture learns to dynamically infer the new gravity from its physical history. The moment the gravity switches, the BDH model's Fast Weights rewire to compensate, perfectly catching the pendulum and preventing it from falling over.
 
----
-
-## Metrics
-
-*   **Prediction Error Curve:** MSE between predicted and actual next states over time.
-*   **Time-to-Recover:** The number of timesteps after the dynamics switch until the prediction error returns to within 110% of the pre-switch baseline.
-*   **Area Under the Recovery Curve (AURC):** The cumulative prediction error post-switch.
+**To view live:**
+```bash
+cd pendulum
+python run_live.py
+```
 
 ---
 
-## Project Structure & Roadmap
+## 🚀 Experiment 2: LunarLander Thruster Failure (`lander/`)
+We scaled the architecture up to the much harder continuous control problem: `LunarLanderContinuous-v3`.
 
-*   **`bdh.py`**: Model architecture.
-*   **`train.py`**: Toy training script (original language modeling setup).
-*   **Milestone M0 (Current):** Environment setup and stock model sanity checks.
-*   **Milestone M1:** Adapting BDH for continuous state-action inputs and next-state regression.
-*   **Milestone M2:** Implementing the mid-rollout switch harness and establishing the live-$\sigma$ baseline.
-*   **Milestone M3:** Implementing the frozen-$\sigma$ ablation and baseline models.
-*   **Milestone M4:** Multi-seed runs, aggregating results, and plotting figures.
+We engineered a **mid-flight catastrophic failure**: At timestep 60 (right in the middle of rapid descent), the left side-thruster loses 80% of its power. If the lander tries to use it normally, it induces an uncontrollable, deadly asymmetric spin.
+
+**The Pipeline:**
+1. **Train Privileged Expert:** We trained a DDPG expert with explicit knowledge of the thruster's health. It learned to land perfectly even when the thruster was broken by dynamically relying on the main engine to counter the spin.
+2. **DAgger Distillation:** We cloned the Expert into the unprivileged BDH sequence model. The BDH model is blind to the thruster health—it must deduce the failure entirely from the unexpected rotational momentum it experiences.
+
+**Results:**
+When the thruster blows out, an untrained baseline will wildly spin into the ground and score a massive penalty (~ -500). The BDH model successfully uses its Fast Weight memory to detect the failure, instantly fight the spin, and stabilize into a soft crash or hover (-36), demonstrating incredibly powerful online adaptation.
+
+**To view live:**
+```bash
+cd lander
+python run_live_lander.py
+```
