@@ -76,7 +76,43 @@ class BDHPolicy(nn.Module):
 
         return predictions, loss
 
+    def forward_with_activations(self, states, freeze_timestep=None):
+        C = self.config
+        B, T, _ = states.size()
+        D = C.n_embd
+        nh = C.n_head
+        N = D * C.mlp_internal_dim_multiplier // nh
+
+        x = self.input_proj(states).unsqueeze(1)
+        x = self.ln(x)
+
+        all_activations = []
+
+        for level in range(C.n_layer):
+            x_latent = x @ self.encoder
+            x_sparse = F.relu(x_latent)  # B, nh, T, N
+            all_activations.append(x_sparse)
+
+            yKV = self.attn(
+                Q=x_sparse, K=x_sparse, V=x,
+                freeze_timestep=freeze_timestep
+            )
+            yKV = self.ln(yKV)
+
+            y_latent = yKV @ self.encoder_v
+            y_sparse = F.relu(y_latent)
+            xy_sparse = x_sparse * y_sparse
+            xy_sparse = self.drop(xy_sparse)
+
+            yMLP = xy_sparse.transpose(1, 2).reshape(B, 1, T, N * nh) @ self.decoder
+            y = self.ln(yMLP)
+            x = self.ln(x + y)
+
+        predictions = 2.0 * torch.tanh(self.output_head(x.view(B, T, D)))
+        return predictions, all_activations
+
 class TransformerPolicy(nn.Module):
+
     """
     Transformer policy baseline for behavior cloning.
     """
