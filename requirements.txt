@@ -1,0 +1,6 @@
+torch==2.12.1
+numpy==2.5.0
+requests==2.34.2
+gymnasium==1.3.0
+mujoco==3.10.0
+matplotlib==3.11.0

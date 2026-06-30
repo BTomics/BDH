@@ -1,0 +1,6 @@
+input.txt
+.venv/
+__pycache__/
+.agents/
+.claude/
+*.pyc
