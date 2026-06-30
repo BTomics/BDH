@@ -15,7 +15,8 @@ class BDHConfig:
     dropout: float = 0.1
     n_head: int = 4
     mlp_internal_dim_multiplier: int = 128
-    vocab_size: int = 256
+    state_dim: int = 3
+    action_dim: int = 1
 
 
 def get_freqs(n, theta, dtype):
@@ -53,7 +54,7 @@ class Attention(torch.nn.Module):
         phases_cos, phases_sin = Attention.phases_cos_sin(phases)
         return (v * phases_cos).to(v.dtype) + (v_rot * phases_sin).to(v.dtype)
 
-    def forward(self, Q, K, V):
+    def forward(self, Q, K, V, freeze_timestep=None):
         assert self.freqs.dtype == torch.float32
         assert K is Q
         _, _, T, _ = Q.size()
@@ -70,31 +71,41 @@ class Attention(torch.nn.Module):
         KR = QR
 
         # Current attention
-        scores = (QR @ KR.mT).tril(diagonal=-1)
+        scores = (QR @ KR.mT)
+        
+        # PRO-87: Causal mask with optional freezing of Hebbian updates (fast-weights)
+        mask = torch.tril(torch.ones((T, T), device=Q.device), diagonal=-1)
+        if freeze_timestep is not None:
+            freeze_mask = torch.zeros((T, T), device=Q.device)
+            freeze_mask[:, :freeze_timestep] = 1.0
+            mask = mask * freeze_mask
+            
+        scores = scores * mask
         return scores @ V
 
 
 class BDH(nn.Module):
     def __init__(self, config: BDHConfig):
         super().__init__()
-        assert config.vocab_size is not None
         self.config = config
         nh = config.n_head
         D = config.n_embd
         N = config.mlp_internal_dim_multiplier * D // nh
+        
         self.decoder = nn.Parameter(torch.zeros((nh * N, D)).normal_(std=0.02))
         self.encoder = nn.Parameter(torch.zeros((nh, D, N)).normal_(std=0.02))
 
         self.attn = Attention(config)
 
         self.ln = nn.LayerNorm(D, elementwise_affine=False, bias=False)
-        self.embed = nn.Embedding(config.vocab_size, D)
+        
+        # PRO-81: Continuous input projection (state_dim + action_dim -> n_embd)
+        self.input_proj = nn.Linear(config.state_dim + config.action_dim, D)
         self.drop = nn.Dropout(config.dropout)
         self.encoder_v = nn.Parameter(torch.zeros((nh, D, N)).normal_(std=0.02))
 
-        self.lm_head = nn.Parameter(
-            torch.zeros((D, config.vocab_size)).normal_(std=0.02)
-        )
+        # PRO-82: Linear next-state regression head (n_embd -> state_dim)
+        self.output_head = nn.Linear(D, config.state_dim)
 
         self.apply(self._init_weights)
 
@@ -103,20 +114,22 @@ class BDH(nn.Module):
             nn.init.normal_(module.weight, mean=0.0, std=0.02)
             if module.bias is not None:
                 nn.init.zeros_(module.bias)
-        elif isinstance(module, nn.Embedding):
-            nn.init.normal_(module.weight, mean=0.0, std=0.02)
 
-    def forward(self, idx, targets=None):
+    def forward(self, states, actions, targets=None, freeze_timestep=None):
         C = self.config
 
-        B, T = idx.size()
+        B, T, _ = states.size()
         D = C.n_embd
         nh = C.n_head
         N = D * C.mlp_internal_dim_multiplier // nh
 
-        x = self.embed(idx).unsqueeze(1)
+        # Concatenate state and action along the feature dimension
+        x_input = torch.cat([states, actions], dim=-1) # B, T, state_dim + action_dim
+        
+        # Project to embedding dimension
+        x = self.input_proj(x_input).unsqueeze(1)  # B, 1, T, D
 
-        # actually helps with training
+        # LayerNorm
         x = self.ln(x)  # B, 1, T, D
 
         for level in range(C.n_layer):
@@ -128,6 +141,7 @@ class BDH(nn.Module):
                 Q=x_sparse,
                 K=x_sparse,
                 V=x,
+                freeze_timestep=freeze_timestep
             )
             yKV = self.ln(yKV)
 
@@ -143,29 +157,38 @@ class BDH(nn.Module):
             y = self.ln(yMLP)
             x = self.ln(x + y)
 
-        logits = x.view(B, T, D) @ self.lm_head
+        # Reshape to (B, T, D) and project to state_dim
+        predictions = self.output_head(x.view(B, T, D))
+        
         loss = None
         if targets is not None:
-            loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
+            # PRO-82: Compute MSE loss for next-state regression
+            loss = F.mse_loss(predictions, targets)
 
-        return logits, loss
+        return predictions, loss
 
     @torch.no_grad()
-    def generate(
-        self,
-        idx: torch.Tensor,
-        max_new_tokens: int,
-        temperature: float = 1.0,
-        top_k: int | None = None,
-    ) -> torch.Tensor:
-        for _ in range(max_new_tokens):
-            idx_cond = idx
-            logits, _ = self(idx_cond)
-            logits = logits[:, -1, :] / temperature
-            if top_k is not None:
-                values, _ = torch.topk(logits, min(top_k, logits.size(-1)))
-                logits[logits < values[:, [-1]]] = float("-inf")
-            probs = F.softmax(logits, dim=-1)
-            idx_next = torch.multinomial(probs, num_samples=1)
-            idx = torch.cat((idx, idx_next), dim=1)
-        return idx
+    def generate_rollout(self, initial_state: torch.Tensor, actions: torch.Tensor) -> torch.Tensor:
+        """
+        Autoregressively predict the sequence of next states.
+        initial_state: (B, 1, state_dim)
+        actions: (B, T, action_dim)
+        Returns: predicted_states (B, T, state_dim)
+        """
+        B, T, _ = actions.size()
+        predicted_states = []
+        
+        for t in range(T):
+            if len(predicted_states) > 0:
+                # Concatenate initial state and all predicted states up to now
+                history_states = torch.cat([initial_state] + predicted_states, dim=1) # (B, t+1, state_dim)
+                history_actions = actions[:, :t+1, :] # (B, t+1, action_dim)
+                preds, _ = self(history_states, history_actions)
+                next_state_pred = preds[:, -1:, :]
+            else:
+                preds, _ = self(initial_state, actions[:, :1, :])
+                next_state_pred = preds[:, -1:, :]
+                
+            predicted_states.append(next_state_pred)
+            
+        return torch.cat(predicted_states, dim=1)
