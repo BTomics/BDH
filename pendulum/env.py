@@ -3,9 +3,8 @@ import numpy as np
 
 class PendulumRegimeEnv:
     def __init__(self, render_mode=None):
-        # TODO: Initialize the 'Pendulum-v1' environment using gymnasium
         self.env = gym.make("Pendulum-v1", render_mode=render_mode)
-        
+
         # Define the parameters for the regimes.
         # Regime A is the default Pendulum-v1 parameters.
         # Regime B has modified parameters (e.g., double gravity) to simulate altered dynamics.
@@ -40,13 +39,8 @@ class PendulumRegimeEnv:
         
         self.current_regime = regime_name
         params = self.regimes[regime_name]
-        
-        # TODO: Update the physics parameters on the unwrapped environment.
-        # Hint: In Gymnasium, you can access the raw environment attributes using `self.env.unwrapped`.
-        # You need to update:
-        # - self.env.unwrapped.g
-        # - self.env.unwrapped.m
-        # - self.env.unwrapped.l
+
+        # Update the physics parameters on the unwrapped environment.
         self.env.unwrapped.g = params["g"]
         self.env.unwrapped.m = params["m"]
         self.env.unwrapped.l = params["l"]
@@ -54,14 +48,9 @@ class PendulumRegimeEnv:
         print(f"Switched to Regime {regime_name}: g={params['g']}, m={params['m']}, l={params['l']}")
 
     def reset(self, seed=None):
-        # TODO: Reset the environment and return the initial observation and info
-        # Hint: delegate to self.env.reset(seed=seed)
         return self.env.reset(seed=seed)
 
     def step(self, action):
-        # TODO: Step the environment forward using the action
-        # Return: observation, reward, terminated, truncated, info
-        # Hint: delegate to self.env.step(action)
         return self.env.step(action)
 
     def close(self):

@@ -8,7 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import bdh
 import baselines
-from env_wrapper import PendulumRegimeEnv
+from env import PendulumRegimeEnv
 
 # Set device and seed
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

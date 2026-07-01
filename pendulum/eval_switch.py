@@ -5,7 +5,7 @@ import os
 import torch
 import numpy as np
 import matplotlib.pyplot as plt
-from env_wrapper import PendulumRegimeEnv
+from env import PendulumRegimeEnv
 import bdh
 
 # Set device

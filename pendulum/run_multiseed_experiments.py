@@ -7,7 +7,7 @@ import torch.nn as nn
 import numpy as np
 import bdh
 import baselines
-from env_wrapper import PendulumRegimeEnv
+from env import PendulumRegimeEnv
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -27,10 +27,10 @@ SWITCH_TIMESTEP = 100
 # Regime B_novel: Double pole mass, standard gravity (completely different type of shift)
 regime_variants = {
     "seen": "B",       # B has g=20.0, m=1.0, l=1.0
-    "novel": "B_novel" # We will add this to env_wrapper's regimes: g=10.0, m=3.0, l=1.0
+    "novel": "B_novel" # Defined in env.py regimes: g=10.0, m=3.0, l=1.0
 }
 
-# Update env_wrapper's regimes to support B_novel
+# env.py already defines B_novel; override here as a safeguard in case it is missing
 PendulumRegimeEnv.regimes = {
     "A": {"g": 10.0, "m": 1.0, "l": 1.0},
     "B": {"g": 20.0, "m": 1.0, "l": 1.0},

@@ -8,7 +8,7 @@ import torch.optim as optim
 import numpy as np
 import gymnasium as gym
 from collections import deque
-from env_wrapper import RandomizedPendulumEnv
+from env import RandomizedPendulumEnv
 
 # Set device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

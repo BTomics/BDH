@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 import numpy as np
-from env_wrapper import PendulumRegimeEnv
+from env import PendulumRegimeEnv
 
 def collect_rollouts(num_episodes: int, horizon: int, regime: str = "A") -> dict:
     """
